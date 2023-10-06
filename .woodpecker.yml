@@ -1,0 +1,79 @@
+steps:
+  env-info:
+    image: rust
+    commands:
+      - pwd
+      - ls -lah .
+      - echo $CARGO_HOME
+      - ls -lah $CARGO_HOME
+    environment:
+      - CARGO_HOME=/var/cargo
+    volumes:
+      - /tmp/woodpecker/cache/${CI_REPO}/cargo/:/var/cargo/
+      - /tmp/woodpecker/cache/${CI_REPO}/target/:/woodpecker/src/git.normegil.be/${CI_REPO}/target/
+  verify:
+    image: rust
+    commands:
+      - rustup component add clippy
+      - rustup component add rustfmt
+      - cargo install cargo-audit typos-cli
+      - cargo audit
+      - cargo clippy -- -D warnings
+      - cargo fmt -- --check
+      - $CARGO_HOME/bin/typos
+    environment:
+      - CARGO_HOME=/var/cargo
+    volumes:
+      - /tmp/woodpecker/cache/${CI_REPO}/cargo/:/var/cargo/
+      - /tmp/woodpecker/cache/${CI_REPO}/target/:/woodpecker/src/git.normegil.be/${CI_REPO}/target/
+  test:
+    image: rust
+    commands:
+      - cargo test
+    environment:
+      - CARGO_HOME=/var/cargo
+    volumes:
+      - /tmp/woodpecker/cache/${CI_REPO}/cargo/:/var/cargo/
+      - /tmp/woodpecker/cache/${CI_REPO}/target/:/woodpecker/src/git.normegil.be/${CI_REPO}/target/
+  coverage:
+    image: rust
+    commands:
+      - cargo install cargo-llvm-cov
+      - cargo llvm-cov --html
+      - mkdir -p /var/coverage/normegil/echo-rs/
+      - rm -rf /var/coverage/normegil/echo-rs/*
+      - cp -r target/llvm-cov/html/* /var/coverage/normegil/echo-rs/
+    environment:
+      - CARGO_HOME=/var/cargo
+    volumes:
+      - /tmp/woodpecker/cache/${CI_REPO}/cargo/:/var/cargo/
+      - /var/coverage:/var/coverage
+      - /tmp/woodpecker/cache/${CI_REPO}/target/:/woodpecker/src/git.normegil.be/${CI_REPO}/target/
+  build:
+    image: rust
+    commands:
+      - cargo build --release
+      - curl -v -u $NEXUS_USER:$NEXUS_PASSWORD --upload-file target/release/echo-rs https://nexus.normegil.be/repository/exe/echo-rs/echo-rs.linux-x86_64.$(date +"%Y-%m-%dT%H-%M-%S")
+    environment:
+      - CARGO_HOME=/var/cargo
+    volumes:
+      - /tmp/woodpecker/cache/${CI_REPO}/cargo/:/var/cargo/
+    secrets:
+      - nexus_user
+      - nexus_password
+  ntfy-success:
+    image: "codeberg.org/l-x/woodpecker-ntfy"
+    settings:
+      url: "https://ntfy.normegil.be/personal-ci-D2bTlogXsDdFwhpH"
+      tags: "heavy_check_mark"
+      message: "${CI_REPO_NAME}: Succès du pipeline"
+    when:
+      status: success
+  ntfy-failure:
+    image: "codeberg.org/l-x/woodpecker-ntfy"
+    settings:
+      url: "https://ntfy.normegil.be/personal-ci-D2bTlogXsDdFwhpH"
+      tags: "warning"
+      message: "${CI_REPO_NAME}: Echec du pipeline"
+    when:
+      status: failure
