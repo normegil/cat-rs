@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.4.6", features = ["derive"] }
+thiserror = "1.0.49"
 trycmd = "0.14.19"

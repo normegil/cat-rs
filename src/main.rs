@@ -1,19 +1,54 @@
+use std::{fs, io};
+
 use clap::Parser;
+use thiserror::Error;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     input: Option<Vec<String>>,
 }
+
+#[derive(Error, Debug)]
+enum Errors {
+    #[error("Cannot read from stdin")]
+    CouldNotReadFromStdin(#[from] io::Error)
+}
+
 fn main() {
     let args = Args::parse();
 
-    println!("Hello, {:?}", args);
+    if args.input == None {
+        if let Err(e) = read_from_stdin() {
+            panic!("{}", e);
+        }
+    } else if let Some(inputs) = args.input {
+        for input in inputs {
+            match fs::read_to_string(&input) {
+                Ok(content) => {
+                    println!("{}", content.trim());
+                }
+                Err(e) => {
+                    panic!("Error when reading {}: {}", &input, e);
+                }
+            }
+        }
+    }
+}
+
+fn read_from_stdin() -> Result<(), Errors> {
+    let stdin = io::stdin();
+    loop {
+        let mut buffer = String::new();
+        stdin.read_line(&mut buffer)?;
+        println!("{}", buffer.trim());
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use clap::Parser;
+
     use super::Args;
 
     #[test]

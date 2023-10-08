@@ -1,0 +1,2 @@
+bin.name = "cat-rs"
+args = "'tests/cmd/multi_file/lorem-ipsum.txt' 'tests/cmd/multi_file/lorem-ipsum2.txt'"
