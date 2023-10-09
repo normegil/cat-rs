@@ -12,7 +12,7 @@ struct Args {
 #[derive(Error, Debug)]
 enum Errors {
     #[error("Cannot read from stdin")]
-    CouldNotReadFromStdin(#[from] io::Error)
+    CouldNotReadFromStdin(#[from] io::Error),
 }
 
 fn main() {
@@ -65,11 +65,15 @@ mod tests {
 
     #[test]
     fn arg_multiple() {
-        let args = Args::parse_from(&["cat-rs", "first_arg.txt", "second_arg.txt", "third_arg.txt"]);
-        assert_eq!(args.input, Some(vec![
-            "first_arg.txt".to_string(),
-            "second_arg.txt".to_string(),
-            "third_arg.txt".to_string()
-        ]));
+        let args =
+            Args::parse_from(&["cat-rs", "first_arg.txt", "second_arg.txt", "third_arg.txt"]);
+        assert_eq!(
+            args.input,
+            Some(vec![
+                "first_arg.txt".to_string(),
+                "second_arg.txt".to_string(),
+                "third_arg.txt".to_string()
+            ])
+        );
     }
 }
