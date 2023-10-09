@@ -1,0 +1,2 @@
+bin.name = "cat-rs"
+args = "-vE tests/cmd/show_end_partial/lorem-ipsum.txt"
