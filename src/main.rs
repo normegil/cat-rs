@@ -18,7 +18,7 @@ enum Errors {
 fn main() {
     let args = Args::parse();
 
-    if args.input == None {
+    if args.input.is_none() {
         if let Err(e) = read_from_stdin() {
             panic!("{}", e);
         }
